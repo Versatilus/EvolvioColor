@@ -1,0 +1,14 @@
+# Ignore junk
+.idea/
+hidden/
+.hidden/
+build/
+out/
+.vscode/
+PIC/
+log.txt
+*.log
+*.*\#
+*.*~
+.tern*
+.projectile
