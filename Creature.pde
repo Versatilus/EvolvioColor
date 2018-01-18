@@ -1,13 +1,13 @@
 class Creature extends SoftBody {
-	double ACCELERATION_ENERGY = 0.07;
+	double ACCELERATION_ENERGY = 0.06;
 	double ACCELERATION_BACK_ENERGY = 0.99;
 	double SWIM_ENERGY = 0.005;
-	double TURN_ENERGY = 0.075;
-	double EAT_ENERGY = 0.05;
+	double TURN_ENERGY = 0.0625;
+	double EAT_ENERGY = 0.045;
 	double EAT_SPEED = 0.75;                                // 1 is instant, 0 is nonexistent, 0.001 is verrry slow.
-	double EAT_WHILE_MOVING_INEFFICIENCY_MULTIPLIER = .925; // The bigger this number is, the less effiently creatures eat when they're moving.
+	double EAT_WHILE_MOVING_INEFFICIENCY_MULTIPLIER = .95;  // The bigger this number is, the less effiently creatures eat when they're moving.
 	double FIGHT_ENERGY = 0.1;
-	double INJURED_ENERGY = 1.;
+	double INJURED_ENERGY = .125;
 	double METABOLISM_ENERGY = 0.015;
 	String name;
 	String parents;
@@ -214,7 +214,7 @@ class Creature extends SoftBody {
 
 				for (int input = 0; input < neurons[x - 1].length - 1; input++)
 					total += neurons[x - 1][input] * axons[x - 1][y][input].weight;
-				total /= (neurons[x - 1].length * .25);
+				total /= (neurons[x - 1].length);
 				if (x == BRAIN_WIDTH - 1) {
 					neurons[x][y] = sigmoid(total + neurons[x][neurons[x].length - 1]);
 					if (y == 8)
@@ -232,7 +232,7 @@ class Creature extends SoftBody {
 
 			axons[x][y][z] = axons[x][y][z].mutateAxon();
 		}
-		if (ThreadLocalRandom.current().nextDouble() < .001) {  // * axons.length * axons[0].length * axons[0][0].length) {
+		if (ThreadLocalRandom.current().nextDouble() < .0001) { // * axons.length * axons[0].length * axons[0][0].length) {
 			int x = ThreadLocalRandom.current().nextInt(memoryAxons.length);
 			int y = ThreadLocalRandom.current().nextInt(memoryAxons[0].length);
 

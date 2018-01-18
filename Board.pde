@@ -372,6 +372,8 @@ class Board {
 		return folder + "/" + modes[type] + "/" + nf(fileSaveCounts[type], 5) + ending;
 	}
 	public void iterate(double timeStep) {
+		while (isDrawing) {}
+		isSimulating = true;
 		iterationStartTime = millis();
 
 		double prevYear = year;
@@ -388,33 +390,27 @@ class Board {
 		double tempChangeIntoThisFrame = temperature - getGrowthRate(getSeason() - timeStep);
 		double tempChangeOutOfThisFrame = getGrowthRate(getSeason() + timeStep) - temperature;
 
-		noiseSeed(SEED);
 
-		randomSeed(SEED);
-
-		double bdYear = year - timeStep;
-		float stepSize = (float)(NOISE_STEP_SIZE + bdYear * .00001);
-
-		for (int x = 0; x < boardWidth; x++) {
-			for (int y = 0; y < boardHeight; y++) {
-				float bigForce = pow(((float)y) / boardHeight, 0.5);
-				float fertility = (noise(x * stepSize * 3, y * stepSize * 3) * (1 - bigForce) * 5.0 + noise(
-				x * stepSize * 0.5, y * stepSize * 0.5) * bigForce * 5.0 - 1.5) * .65 + .31;
-				float climateType = noise(x * stepSize * 0.2 + 10000, y * stepSize * 0.2 + 10000) * 1.63 -
-				0.4;
-
-				climateType = min(max(climateType, 0), 0.92);
-				tiles[x][y] = new Tile(x, y, fertility, (float)tiles[x][y].getFoodLevel(), climateType,
-					this);
-				tiles[x][y].lastUpdateTime = year - timeStep;
-			}
-		}
 		if (tempChangeIntoThisFrame * tempChangeOutOfThisFrame <= 0) {  // Temperature change flipped direction.
-			// for (int x = 0; x < boardWidth; x++) {
-			// for (int y = 0; y < boardHeight; y++)
-			// tiles[x][y].iterate();
-			// }
+			noiseSeed(SEED);
+			randomSeed(SEED);
+
+			float stepSize = (float)(NOISE_STEP_SIZE + prevYear * .000025);
+
 			for (int x = 0; x < boardWidth; x++) {
+				for (int y = 0; y < boardHeight; y++) {
+					float bigForce = pow(((float)y) / boardHeight, 0.5);
+					float fertility = (noise(x * stepSize * 3, y * stepSize * 3) * (1 - bigForce) * 5.0 +
+					noise(x * stepSize * 0.5, y * stepSize * 0.5) * bigForce * 5.0 - 1.5) * .65 + .31;
+					float climateType = noise(x * stepSize * 0.2 + 10000, y * stepSize * 0.2 + 10000) * 1.63 -
+					0.4;
+
+					climateType = min(max(climateType, 0), 0.92);
+					tiles[x][y] = new Tile(x, y, fertility, (float)tiles[x][y].getFoodLevel(), climateType,
+						this);
+					tiles[x][y].lastUpdateTime = prevYear;
+				}
+
 				QuickTiler tiler = new QuickTiler(tiles[x], 0, tiles[x].length);
 
 				pool.invoke(tiler);
@@ -453,7 +449,7 @@ class Board {
 			creatures.size(), timeStep * OBJECT_TIMESTEPS_PER_YEAR);
 
 		pool.invoke(quickVision);
-
+		isSimulating = false;
 		// if (Math.floor(fileSaveTimes[1] / imageSaveInterval) != Math.floor(year / imageSaveInterval))
 		// prepareForFileSave(1);
 		// if (Math.floor(fileSaveTimes[3] / textSaveInterval) != Math.floor(year / textSaveInterval))
@@ -676,8 +672,8 @@ class Board {
 		private Tile[] tiles;
 		private int mStart;
 		private int mLength;
-		private double timeStep;
 		private int sThreshold = 5;
+
 
 		public QuickTiler(Tile[] workgroup, int start, int length) {
 			tiles = workgroup;
@@ -687,8 +683,8 @@ class Board {
 
 
 		protected void computeDirectly() {
-			for (int index = mStart; index < mStart + mLength; index++)
-				tiles[index].iterate();
+			for (int y = mStart; y < mStart + mLength; y++)
+				tiles[y].iterate();
 		}
 		@Override protected void compute() {
 			if (mLength < sThreshold) {

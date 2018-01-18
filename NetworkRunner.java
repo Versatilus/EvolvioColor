@@ -43,13 +43,13 @@ import java.util.concurrent.RecursiveAction;
  * illustrate the use of the Fork/Join framework.
  */
 public class NetworkRunner extends RecursiveAction {
-	private evolvioColor.Creature[] creatures;
+	private EvolvioColor.Creature[] creatures;
 	private int mStart;
 	private int mLength;
 	private double timeStep;
 	private int sThreshold = 5;
 
-	public NetworkRunner(evolvioColor.Creature[] workgroup, int start, int length, double ts) {
+	public NetworkRunner(EvolvioColor.Creature[] workgroup, int start, int length, double ts) {
 		creatures = workgroup;
 		mStart = start;
 		mLength = length;

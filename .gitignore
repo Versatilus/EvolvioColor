@@ -2,8 +2,8 @@
 .idea/
 hidden/
 .hidden/
-build/
-out/
+build*/
+out*/
 .vscode/
 PIC/
 log.txt

@@ -8,8 +8,8 @@ int lastFrameTime = 0;
 final float SCALE_TO_FIX_BUG = 100;
 float GROSS_OVERALL_SCALE_FACTOR;
 final double TIME_STEP = 0.001;
-final float MIN_TEMPERATURE = 2.;
-final float MAX_TEMPERATURE = 2.;
+final float MIN_TEMPERATURE = -.5;
+final float MAX_TEMPERATURE = 1.;
 final int ROCKS_TO_ADD = 0;
 final int CREATURE_MINIMUM = 5;
 final int CREATURE_MAXIMUM = 200;
@@ -30,7 +30,9 @@ double LOD_MOUTHS = 1600.;
 double LOD_TEXT = 2000.;
 double LOD_CROSSES = 4000.;
 double averageDrawTime = 0;
-boolean canQuit = false;
+boolean SHIFT_DOWN = false;
+boolean isDrawing = false;
+boolean isSimulating = false;
 
 double getCurrentLOD() {
 	if (evoBoard.drawingIcon == true)
@@ -53,6 +55,8 @@ void draw() {
 	GROSS_OVERALL_SCALE_FACTOR = ((float)height) / BOARD_HEIGHT / SCALE_TO_FIX_BUG;
 	for (int iteration = 0; iteration < evoBoard.playSpeed; iteration++)
 		evoBoard.iterate(TIME_STEP);
+	while (isSimulating) {}
+	isDrawing = true;
 
 	int drawStartTime = millis();
 
@@ -93,6 +97,7 @@ void draw() {
 	// evoBoard.playSpeed);
 	// }
 	evoBoard.fileSave();
+	isDrawing = false;
 	prevMouseX = mouseX;
 	prevMouseY = mouseY;
 	averageDrawTime = (2. * averageDrawTime + (double)(millis() - drawStartTime)) / 3.;
@@ -131,25 +136,28 @@ void mousePressed() {
 				int mX = (int)(x / 230);
 				int mY = (int)(y / 50);
 				int buttonNum = mX + mY * 2;
+				int increment = evoBoard.creatureMinimumIncrement;
 
+				if (SHIFT_DOWN)
+					increment *= 20;
 				if (buttonNum == 0) {
 					evoBoard.userControl = !evoBoard.userControl;
 				} else if (buttonNum == 1) {
 					if (clickedOnLeft)
-						evoBoard.creatureMinimum -= evoBoard.creatureMinimumIncrement;
+						evoBoard.creatureMinimum -= increment;
 					else
-						evoBoard.creatureMinimum += evoBoard.creatureMinimumIncrement;
-					evoBoard.creatureMaximum = evoBoard.creatureMinimum > evoBoard.creatureMaximum ?
-					evoBoard.creatureMinimum : evoBoard.creatureMaximum;
+						evoBoard.creatureMinimum += increment;
+					evoBoard.creatureMinimum = Math.max(evoBoard.creatureMinimum, 0);
+					evoBoard.creatureMaximum = Math.max(evoBoard.creatureMinimum, evoBoard.creatureMaximum);
 				} else if (buttonNum == 2) {
 					evoBoard.prepareForFileSave(0);
 				} else if (buttonNum == 3) {
 					if (clickedOnLeft)
-						evoBoard.creatureMaximum -= evoBoard.creatureMinimumIncrement;
+						evoBoard.creatureMaximum -= increment;
 					else
-						evoBoard.creatureMaximum += evoBoard.creatureMinimumIncrement;
-					evoBoard.creatureMinimum = evoBoard.creatureMinimum > evoBoard.creatureMaximum ?
-					evoBoard.creatureMaximum : evoBoard.creatureMinimum;
+						evoBoard.creatureMaximum += increment;
+					evoBoard.creatureMaximum = Math.max(evoBoard.creatureMaximum, 0);
+					evoBoard.creatureMinimum = Math.min(evoBoard.creatureMinimum, evoBoard.creatureMaximum);
 					if (evoBoard.imageSaveInterval >= 0.7)
 						evoBoard.imageSaveInterval = Math.round(evoBoard.imageSaveInterval);
 				} else if (buttonNum == 4) {
@@ -282,13 +290,13 @@ void keyPressed() {
 		resetZoom();
 		break;
 	case 'Q':
-		if (canQuit)
+		if (SHIFT_DOWN)
 			exit();
 		break;
 	case CODED:
 		switch (keyCode) {
 		case SHIFT:
-			canQuit = true;
+			SHIFT_DOWN = true;
 			break;
 		}
 		break;
@@ -300,7 +308,7 @@ void keyReleased() {
 	case CODED:
 		switch (keyCode) {
 		case SHIFT:
-			canQuit = false;
+			SHIFT_DOWN = false;
 			break;
 		}
 		break;

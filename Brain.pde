@@ -20,9 +20,9 @@ Axon[][][] newWeights(int[] _shape) {
 				// AXON_START_MUTABILITY / Math.pow(0.5, mutatePower);
 				double startingWeight = ThreadLocalRandom.current().nextGaussian() * 2.;
 
-				if (y == weights[x].length - 1)
-					startingWeight = Math.copySign(ThreadLocalRandom.current().nextGaussian() * 1.5 + .5,
-						ThreadLocalRandom.current().nextDouble() * 2 - 1);
+				// if (y == weights[x].length - 1)
+				// startingWeight = Math.copySign(ThreadLocalRandom.current().nextGaussian() * 1.5 + .5,
+				// ThreadLocalRandom.current().nextDouble() * 2 - 1);
 				weights[x][y][z] = new Axon(startingWeight * STARTING_AXON_VARIABILITY,
 					AXON_START_MUTABILITY);
 			}

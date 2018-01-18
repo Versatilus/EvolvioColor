@@ -44,6 +44,7 @@ class Tile {
 		fill(landColor);
 		rect(posX * scaleUp, posY * scaleUp, scaleUp, scaleUp);
 		if (showEnergy && getCurrentLOD() >= LOD_TEXT) {
+			iterate();
 			if (brightness(landColor) >= 0.7)
 				fill(0, 0, 0, 1);
 			else
