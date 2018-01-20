@@ -406,9 +406,12 @@ class Board {
 					0.4;
 
 					climateType = min(max(climateType, 0), 0.92);
+
+					double lastUpdate = tiles[x][y].lastUpdateTime;
+
 					tiles[x][y] = new Tile(x, y, fertility, (float)tiles[x][y].getFoodLevel(), climateType,
 						this);
-					tiles[x][y].lastUpdateTime = prevYear;
+					tiles[x][y].lastUpdateTime = lastUpdate;
 				}
 
 				QuickTiler tiler = new QuickTiler(tiles[x], 0, tiles[x].length);
@@ -416,6 +419,8 @@ class Board {
 				pool.invoke(tiler);
 			}
 		}
+		randomSeed(ThreadLocalRandom.current().nextInt());
+
 		/*for(int x = 0; x < boardWidth; x++){
 		 * for(int y = 0; y < boardHeight; y++){
 		 *  tiles[x][y].iterate(this, year);
