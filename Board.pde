@@ -107,9 +107,9 @@ class Board {
 		ROCKS_TO_ADD = rta;
 		rocks = new ArrayList<SoftBody>();
 		for (int i = 0; i < ROCKS_TO_ADD; i++) {
-			rocks.add(new SoftBody(random(boardWidth), random(boardHeight), 0, 0, getRandomSize(),
-			ROCK_DENSITY, hue(ROCK_COLOR), saturation(ROCK_COLOR), brightness(ROCK_COLOR), this,
-			year));
+			rocks.add(new SoftBody(ThreadLocalRandom.current().nextDouble(boardWidth),
+			ThreadLocalRandom.current().nextDouble(boardHeight), 0, 0, getRandomSize(), ROCK_DENSITY,
+			hue(ROCK_COLOR), saturation(ROCK_COLOR), brightness(ROCK_COLOR), this, year));
 		}
 		creatureMinimum = cm;
 		creatureMaximum = CREATURE_MAXIMUM;
@@ -241,11 +241,11 @@ class Board {
 
 				textFont(font, 19);
 				String[] buttonTexts = { "Brain Control", "Minimum pop. " + creatureMinimum,
-					                       "Screenshot now", "Maximum pop. " + creatureMaximum,
-					                       "Text file now",
-					                       "- Text every " + nf((float)textSaveInterval, 0, 2) + " years +",
-					                       "-    Play Speed (" + playSpeed + "x)    +",
-					                       "This button does nothing" };
+					                       "Screenshot now", "Maximum pop. " + creatureMaximum, "Print Stats",
+					                       "- Text every " +
+					                       nf((float)textSaveInterval, 0, 2) + " years +",
+					                       "-    Play Speed (" + playSpeed +
+					                       "x)    +", "This button does nothing" };
 				if (userControl)
 					buttonTexts[0] = "Keyboard Control";
 				for (int i = 0; i < 8; i++) {
@@ -398,21 +398,21 @@ class Board {
 			float stepSize = (float)(NOISE_STEP_SIZE + prevYear * .000025);
 
 			for (int x = 0; x < boardWidth; x++) {
-				for (int y = 0; y < boardHeight; y++) {
-					float bigForce = pow(((float)y) / boardHeight, 0.5);
-					float fertility = (noise(x * stepSize * 3, y * stepSize * 3) * (1 - bigForce) * 5.0 +
-					noise(x * stepSize * 0.5, y * stepSize * 0.5) * bigForce * 5.0 - 1.5) * .65 + .31;
-					float climateType = noise(x * stepSize * 0.2 + 10000, y * stepSize * 0.2 + 10000) * 1.63 -
-					0.4;
-
-					climateType = min(max(climateType, 0), 0.92);
-
-					double lastUpdate = tiles[x][y].lastUpdateTime;
-
-					tiles[x][y] = new Tile(x, y, fertility, (float)tiles[x][y].getFoodLevel(), climateType,
-						this);
-					tiles[x][y].lastUpdateTime = lastUpdate;
-				}
+				// for (int y = 0; y < boardHeight; y++) {
+				// float bigForce = pow(((float)y) / boardHeight, 0.5);
+				// float fertility = (noise(x * stepSize * 3, y * stepSize * 3) * (1 - bigForce) * 5.0 +
+				// noise(x * stepSize * 0.5, y * stepSize * 0.5) * bigForce * 5.0 - 1.5) * .65 + .31;
+				// float climateType = noise(x * stepSize * 0.2 + 10000, y * stepSize * 0.2 + 10000) * 1.63 -
+				// 0.4;
+				//
+				// climateType = min(max(climateType, 0), 0.92);
+				//
+				// double lastUpdate = tiles[x][y].lastUpdateTime;
+				//
+				// tiles[x][y] = new Tile(x, y, fertility, (float)tiles[x][y].getFoodLevel(), climateType,
+				// this);
+				// tiles[x][y].lastUpdateTime = lastUpdate;
+				// }
 
 				QuickTiler tiler = new QuickTiler(tiles[x], 0, tiles[x].length);
 
@@ -572,8 +572,8 @@ class Board {
 
 				Creature offspring = creatures.get(creatures.size() - 1);
 
-				offspring.px = Math.random() * boardWidth;
-				offspring.py = Math.random() * boardHeight;
+				offspring.px = ThreadLocalRandom.current().nextDouble() * boardWidth;
+				offspring.py = ThreadLocalRandom.current().nextDouble() * boardHeight;
 			} else {
 				double tx = ThreadLocalRandom.current().nextDouble(boardWidth);
 				double ty = ThreadLocalRandom.current().nextDouble(boardHeight);
@@ -584,9 +584,10 @@ class Board {
 				else
 					tc = .95 * (1 + tx / boardWidth - ty / boardHeight);
 				tc += ThreadLocalRandom.current().nextGaussian() * .1;
-				creatures.add(new Creature(tx, ty, 0, 0, random(MIN_CREATURE_ENERGY, MAX_CREATURE_ENERGY),
-				1, tc % 1., 1, 1, this, year, random(TAU), 0, "", "[PRIMORDIAL]", true, null, null,
-				null, 1, random(1)));
+				creatures.add(new Creature(tx, ty, 0, 0, ThreadLocalRandom.current().nextDouble(
+				MAX_CREATURE_ENERGY - MIN_CREATURE_ENERGY) + MIN_CREATURE_ENERGY, 1, tc % 1., 1, 1,
+				this, year, ThreadLocalRandom.current().nextDouble(TAU), 0, "", "[PRIMORDIAL]", true,
+				null, null, null, 1, ThreadLocalRandom.current().nextDouble()));
 			}
 		}
 		if (creatures.size() > creatureMaximum) {
@@ -600,13 +601,14 @@ class Board {
 		}
 	}
 	private Creature getRandomCreature() {
-		int index = (int)(random(creatures.size()));
+		int index = (int)(ThreadLocalRandom.current().nextDouble(creatures.size()));
 
 
 		return creatures.get(index);
 	}
 	private double getRandomSize() {
-		return pow(random(MIN_ROCK_ENERGY_BASE, MAX_ROCK_ENERGY_BASE), 4);
+		return Math.pow(ThreadLocalRandom.current().nextDouble(MAX_ROCK_ENERGY_BASE -
+			MIN_ROCK_ENERGY_BASE) + MIN_ROCK_ENERGY_BASE, 4);
 	}
 	private void drawCreature(Creature c, float x, float y, float scale, float scaleUp) {
 		drawingIcon = true;

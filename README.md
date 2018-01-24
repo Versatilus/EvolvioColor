@@ -5,4 +5,10 @@ This program, evolv.io, is the product and focus of a series of videos by the Yo
 
 This is the bleeding edge of my developments. The code is vastly under commented and very rough around the edges. I'm (re-) learning both Java and Processing as I go along. I intend to be more methodical and organized as I progress.
 
+- Direct creature control has been disabled.
+- SHIFT + Q exits.
+- ESC cancels/zooms out/unselects.
+- SHIFT + click creature limits increments/decrements by 100.
+- SHIFT + click playback speed sets it to 0/maximum to maintain ~5 fps.
+
 The code was released "open source" but without a specific license, so take that Apache license with a grain of salt.

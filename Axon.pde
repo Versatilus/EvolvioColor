@@ -18,7 +18,7 @@ class Axon {
 		return new Axon(weight + r() * mutability / MUTATE_MULTI, mutability * mutabilityMutate);
 	}
 	public double r() {
-		return Math.pow(ThreadLocalRandom.current().nextGaussian(), mutatePower);
+		return Math.pow(ThreadLocalRandom.current().nextGaussian() * .33333, mutatePower);
 	}
 	public double pmRan() {
 		return ThreadLocalRandom.current().nextDouble() * 2.0 - 1.0;

@@ -1,12 +1,12 @@
 class Creature extends SoftBody {
 	double ACCELERATION_ENERGY = 0.06;
-	double ACCELERATION_BACK_ENERGY = 0.99;
-	double SWIM_ENERGY = 0.005;
+	double ACCELERATION_BACK_ENERGY = 0.499;
+	double SWIM_ENERGY = 0.000125;
 	double TURN_ENERGY = 0.0625;
 	double EAT_ENERGY = 0.045;
 	double EAT_SPEED = 0.75;                                // 1 is instant, 0 is nonexistent, 0.001 is verrry slow.
-	double EAT_WHILE_MOVING_INEFFICIENCY_MULTIPLIER = .95;  // The bigger this number is, the less effiently creatures eat when they're moving.
-	double FIGHT_ENERGY = 0.1;
+	double EAT_WHILE_MOVING_INEFFICIENCY_MULTIPLIER = .975; // The bigger this number is, the less effiently creatures eat when they're moving.
+	double FIGHT_ENERGY = 0.08;
 	double INJURED_ENERGY = .125;
 	double METABOLISM_ENERGY = 0.015;
 	String name;
@@ -29,7 +29,7 @@ class Creature extends SoftBody {
 	double averageFighting = 0.;
 	double averageEnergy = 0.;
 	final double MATURE_AGE = 0.01;
-	final double FOOD_SENSITIVITY = 0.25;
+	final double FOOD_SENSITIVITY = 0.35;
 	double vr = 0;
 	double rotation = 0;
 	final int MIN_NAME_LENGTH = 6;
@@ -196,8 +196,8 @@ class Creature extends SoftBody {
 		neurons[0][16] = sigmoid(energy - 1);
 		neurons[0][17] = Math.sin(rotation);
 		neurons[0][18] = Math.cos(rotation);
-		neurons[0][19] = px / board.boardWidth;
-		neurons[0][20] = py / board.boardHeight;
+		neurons[0][19] = ThreadLocalRandom.current().nextDouble(2.) - 1;  // px / board.boardWidth;
+		neurons[0][20] = ThreadLocalRandom.current().nextGaussian();      // py / board.boardHeight;
 		neurons[0][21] = (board.year % 1.f) * 2.f - 1.f;
 		neurons[0][22] = sigmoid(2. * numberOfCollisions);
 	}
@@ -214,7 +214,7 @@ class Creature extends SoftBody {
 
 				for (int input = 0; input < neurons[x - 1].length - 1; input++)
 					total += neurons[x - 1][input] * axons[x - 1][y][input].weight;
-				total /= (neurons[x - 1].length);
+				total /= (neurons[x - 1].length * .33333);
 				if (x == BRAIN_WIDTH - 1) {
 					neurons[x][y] = sigmoid(total + neurons[x][neurons[x].length - 1]);
 					if (y == 8)
@@ -232,7 +232,7 @@ class Creature extends SoftBody {
 
 			axons[x][y][z] = axons[x][y][z].mutateAxon();
 		}
-		if (ThreadLocalRandom.current().nextDouble() < .0001) { // * axons.length * axons[0].length * axons[0][0].length) {
+		if (ThreadLocalRandom.current().nextDouble() < .00025) {  // * axons.length * axons[0].length * axons[0][0].length) {
 			int x = ThreadLocalRandom.current().nextInt(memoryAxons.length);
 			int y = ThreadLocalRandom.current().nextInt(memoryAxons[0].length);
 
@@ -255,12 +255,12 @@ class Creature extends SoftBody {
 		turn(rotationDesire, timeStep);
 		eat(foodDesire, timeStep);
 		fight(fightDesire, timeStep);
-		if (board.creatureMaximum - 1 > board.creatures.size() && offspringDesire + (energy * .1) >
-		0. && board.year - birthTime >= MATURE_AGE && energy > SAFE_SIZE)
+		if (board.creatureMaximum > board.creatures.size() && offspringDesire + (energy * .1) > 0. &&
+		board.year - birthTime >= MATURE_AGE && energy > SAFE_SIZE)
 			reproduce(SAFE_SIZE, timeStep);
-		hue = Math.abs(inter(geneticHue, hueDesire, neurons[end][8] * neurons[end][8])) % 1.;
-		mouthHue = Math.abs(inter(geneticMouthHue, mouthHueDesire, neurons[end][7] * neurons[end][7])) %
-		1.;
+		// hue = Math.abs(inter(geneticHue, hueDesire, neurons[end][8] * neurons[end][8])) % 1.;
+		// mouthHue = Math.abs(inter(geneticMouthHue, mouthHueDesire, neurons[end][7] * neurons[end][7])) %
+		// 1.;
 	}
 	public double sigmoid(double input) {
 		return 2. / (1.0 + Math.exp(-.45 * input)) - 1.;
@@ -590,7 +590,7 @@ class Creature extends SoftBody {
 				Axon[][] newMemory = offspringMemoryWeights(parents, parents.get(0).memoryAxons);
 				double[][] newNeurons = offspringActivations(parents);
 				for (int i = 0; i < parentsTotal; i++) {
-					int chosenIndex = (int)random(parents.size());
+					int chosenIndex = (int)ThreadLocalRandom.current().nextDouble(parents.size());
 					Creature parent = parents.get(chosenIndex);
 
 					parents.remove(chosenIndex);
@@ -602,24 +602,25 @@ class Creature extends SoftBody {
 					// newSaturation += parent.saturation / parentsTotal;
 					// newBrightness += parent.brightness / parentsTotal;
 					newMouthHue += (parent.geneticMouthHue + ThreadLocalRandom.current().nextGaussian() *
-					.1) / parentsTotal;
+					.5) / parentsTotal;
 					parentNames[i] = parent.name;
 					if (parent.gen > highestGen)
 						highestGen = parent.gen;
 				}
 				if (newPX > newPY)
 					newHue = inter(newHue, .95 * (1 - newPX / board.boardWidth + newPY / board.boardHeight),
-						.75);
+						.9);
 				else
 					newHue = inter(newHue, .95 * (1 + newPX / board.boardWidth - newPY / board.boardHeight),
-						.75);
+						.9);
 				newHue += ThreadLocalRandom.current().nextGaussian() * .05;
 				newSaturation = 1;
 				newBrightness = 1;
 				board.creatures.add(new Creature(newPX, newPY, 0, 0, babySize, density, Math.abs(newHue) %
-				1., newSaturation, newBrightness, board, board.year, random(TAU), 0, stitchName(
-				parentNames), andifyParents(parentNames), true, newBrain, newMemory, newNeurons,
-				highestGen + 1, Math.abs(newMouthHue) % 1.));
+				1., newSaturation, newBrightness, board, board.year,
+				ThreadLocalRandom.current().nextDouble(TAU), 0, stitchName(parentNames), andifyParents(
+				parentNames), true, newBrain, newMemory, newNeurons, highestGen + 1, Math.abs(
+				newMouthHue) % 1.));
 			}
 		}
 	}
@@ -649,7 +650,8 @@ class Creature extends SoftBody {
 	}
 	public String createNewName() {
 		String nameSoFar = "";
-		int chosenLength = (int)(random(MIN_NAME_LENGTH, MAX_NAME_LENGTH));
+		int chosenLength = (int)(ThreadLocalRandom.current().nextDouble(MAX_NAME_LENGTH -
+		MIN_NAME_LENGTH) + MIN_NAME_LENGTH);
 
 
 		for (int i = 0; i < chosenLength; i++)
@@ -657,7 +659,7 @@ class Creature extends SoftBody {
 		return sanitizeName(nameSoFar);
 	}
 	public char getRandomChar() {
-		float letterFactor = random(100);
+		float letterFactor = (float)ThreadLocalRandom.current().nextDouble(100);
 		int letterChoice = 0;
 
 
@@ -722,15 +724,15 @@ class Creature extends SoftBody {
 	}
 	public String mutateName(String input) {
 		if (input.length() >= 3) {
-			if (random(1) < 0.2) {
-				int removeIndex = (int)random(input.length());
+			if (ThreadLocalRandom.current().nextDouble() < 0.2) {
+				int removeIndex = (int)ThreadLocalRandom.current().nextDouble(input.length());
 
 				input = input.substring(0, removeIndex) + input.substring(removeIndex + 1, input.length());
 			}
 		}
 		if (input.length() <= 9) {
-			if (random(1) < 0.2) {
-				int insertIndex = (int)random(input.length() + 1);
+			if (ThreadLocalRandom.current().nextDouble() < 0.2) {
+				int insertIndex = (int)ThreadLocalRandom.current().nextDouble(input.length() + 1);
 
 				input = input.substring(0, insertIndex) + getRandomChar() + input.substring(insertIndex,
 					input.length());

@@ -1,12 +1,12 @@
-final int BRAIN_WIDTH = 5;
-final double AXON_START_MUTABILITY = 0.005;
+final int BRAIN_WIDTH = 9;
+final double AXON_START_MUTABILITY = 0.00375;
 final double STARTING_AXON_VARIABILITY = 1.0;
 int BRAIN_HEIGHT = 24;
 
 String[] inputLabels = { "CHue", "CSat", "CBri", "LHue", "LSat", "LBri", "RHue", "RSat", "RBri",
 	                       "LVisD", "RVisD", "Accel.", "Turn", "Eat", "Fight", "EnergyD", "Size",
 	                       "Sine Rot.",
-	                       "Cosine Rot.", "XLoc", "YLoc", "Season", "# of Coll.", "Const." };
+	                       "Cosine Rot.", "UniRand", "NormRand", "Season", "# of Coll.", "Const." };
 String[] outputLabels = { "Accel.", "Turn", "Eat", "Fight", "Birth", "MHue", "BHue", "MHue2",
 	                        "BHue2" };
 
@@ -18,7 +18,7 @@ Axon[][][] newWeights(int[] _shape) {
 			for (int z = 0; z < weights[x][y].length; z++) {
 				// double startingWeight = Math.pow((Math.random() * 4. - 2.), mutatePower) *
 				// AXON_START_MUTABILITY / Math.pow(0.5, mutatePower);
-				double startingWeight = ThreadLocalRandom.current().nextGaussian() * 2.;
+				double startingWeight = ThreadLocalRandom.current().nextGaussian() * .33333;
 
 				// if (y == weights[x].length - 1)
 				// startingWeight = Math.copySign(ThreadLocalRandom.current().nextGaussian() * 1.5 + .5,
@@ -35,7 +35,7 @@ Axon[][] newMemoryWeights(int[] _shape) {
 	Axon[][] weights = new Axon[_shape[0]][_shape[1]];
 	for (int x = 0; x < weights.length; x++) {
 		for (int y = 0; y < weights[x].length; y++) {
-			double startingWeight = ThreadLocalRandom.current().nextGaussian() * 2.;
+			double startingWeight = ThreadLocalRandom.current().nextGaussian() * .25;
 
 			weights[x][y] = new Axon(startingWeight * STARTING_AXON_VARIABILITY, AXON_START_MUTABILITY);
 		}
@@ -48,8 +48,10 @@ double[][] newActivations(int[] _shape) {
 	for (int x = 0; x < activations.length; x++) {
 		for (int y = 0; y < activations[x].length; y++) {
 			if (y == activations[x].length - 1)
-				activations[x][y] = Math.copySign(ThreadLocalRandom.current().nextDouble() * 1.5 + .25,
-					ThreadLocalRandom.current().nextDouble() * 2 - 1);
+				activations[x][y] = ThreadLocalRandom.current().nextGaussian() * .5;
+
+			/*Math.copySign(ThreadLocalRandom.current().nextDouble() * 1.5 + .25,
+			 * ThreadLocalRandom.current().nextDouble() * 2 - 1);*/
 			else
 				activations[x][y] = 0;
 		}
@@ -67,7 +69,7 @@ Axon[][][] offspringWeights(ArrayList<Creature> parents, Axon[][][] prototypeWei
 		for (int y = 0; y < prototypeWeights[x].length; y++) {
 			for (int z = 0; z < prototypeWeights[x][y].length; z++) {
 				float axonAngle = atan2((y + z) / 2.0 - prototypeWeights[x][y].length / 2.0, x -
-					prototypeWeights.length / 2) / (TAU) + PI;
+					prototypeWeights.length / 2.) / (TAU) + PI;
 				Creature parentForAxon = parents.get((int)(((axonAngle + randomParentRotation) % 1.0) *
 					parents.size()));
 
@@ -86,7 +88,7 @@ Axon[][] offspringMemoryWeights(ArrayList<Creature> parents, Axon[][] prototypeW
 	for (int x = 0; x < prototypeWeights.length; x++) {
 		for (int y = 0; y < prototypeWeights[x].length; y++) {
 			float axonAngle = atan2((y + x) / 2.0 - prototypeWeights[x].length / 2.0, x -
-				prototypeWeights.length / 2) / (TAU) + PI;
+				prototypeWeights.length / 2.) / (TAU) + PI;
 			Creature parentForAxon = parents.get((int)(((axonAngle + randomParentRotation) % 1.0) *
 				parents.size()));
 
@@ -105,10 +107,12 @@ double[][] offspringActivations(ArrayList<Creature> parents) {
 	for (int x = 0; x < prototypeActivations.length; x++) {
 		for (int y = 0; y < prototypeActivations[x].length; y++) {
 			float axonAngle = atan2(y - prototypeActivations[x].length / 2.0, x -
-				prototypeActivations.length / 2) / (TAU) + PI;
+				prototypeActivations.length / 2.) / (TAU) + PI;
 			Creature parentForAxon = parents.get((int)(((axonAngle + randomParentRotation) % 1.0) *
 				parents.size()));
 
+			if (y == prototypeActivations[x].length)
+				activations[x][y] = parentForAxon.neurons[x][y] * .85;
 			activations[x][y] = parentForAxon.neurons[x][y];
 		}
 	}

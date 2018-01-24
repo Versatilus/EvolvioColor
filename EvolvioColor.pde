@@ -8,8 +8,8 @@ int lastFrameTime = 0;
 final float SCALE_TO_FIX_BUG = 100;
 float GROSS_OVERALL_SCALE_FACTOR;
 final double TIME_STEP = 0.001;
-final float MIN_TEMPERATURE = -.5;
-final float MAX_TEMPERATURE = 1.;
+final float MIN_TEMPERATURE = 2.;
+final float MAX_TEMPERATURE = 2.;
 final int ROCKS_TO_ADD = 0;
 final int CREATURE_MINIMUM = 5;
 final int CREATURE_MAXIMUM = 200;
@@ -33,11 +33,16 @@ double averageDrawTime = 0;
 boolean SHIFT_DOWN = false;
 boolean isDrawing = false;
 boolean isSimulating = false;
+boolean maintainMaxPlaybackSpeed = false;
 
 double getCurrentLOD() {
 	if (evoBoard.drawingIcon == true)
 		return LOD_TEXT;
 	return (double)(height * height) / (double)(BOARD_HEIGHT * BOARD_HEIGHT) * zoom;
+}
+
+float findZoom(double LOD) {
+	return (float)(LOD * (double)(BOARD_HEIGHT * BOARD_HEIGHT) / (double)(height * height));
 }
 
 void setup() {
@@ -72,10 +77,10 @@ void draw() {
 		if (evoBoard.setMaxTemperature(1.0 - (mouseY - 30) / 660.0))
 			dragging = 2;
 	}
-	if (evoBoard.userControl && evoBoard.selectedCreature != null) {
+	if (getCurrentLOD() >= LOD_TEXT && evoBoard.selectedCreature != null) {
 		cameraX = (float)evoBoard.selectedCreature.px;
 		cameraY = (float)evoBoard.selectedCreature.py;
-		cameraR = -PI / 2.0 - (float)evoBoard.selectedCreature.rotation;
+		// cameraR = -PI / 2.0 - (float)evoBoard.selectedCreature.rotation;
 	} else {
 		cameraR = 0;
 	}
@@ -101,6 +106,9 @@ void draw() {
 	prevMouseX = mouseX;
 	prevMouseY = mouseY;
 	averageDrawTime = (2. * averageDrawTime + (double)(millis() - drawStartTime)) / 3.;
+	if (maintainMaxPlaybackSpeed && frameCount % (int)frameRate == 0)
+		evoBoard.playSpeed = (int)((1000. - Math.max(averageDrawTime, 17.) * 5) /
+		evoBoard.averageIterationTime * .2);
 }
 
 void mouseWheel(MouseEvent event) {
@@ -108,9 +116,9 @@ void mouseWheel(MouseEvent event) {
 
 
 	if (delta >= 0.5)
-		setZoom(zoom * 0.90909, mouseX, mouseY);
+		setZoom(zoom * 0.8, mouseX, mouseY);
 	else if (delta <= -0.5)
-		setZoom(zoom * 1.1, mouseX, mouseY);
+		setZoom(zoom * 1.25, mouseX, mouseY);
 }
 
 void mousePressed() {
@@ -121,7 +129,7 @@ void mousePressed() {
 		null) {
 			cameraX = (float)evoBoard.selectedCreature.px;
 			cameraY = (float)evoBoard.selectedCreature.py;
-			zoom = 12 * (sqrt(BOARD_WIDTH * BOARD_HEIGHT) / sqrt(10000));
+			zoom = findZoom(1.5 * LOD_TEXT);  // 12 * (sqrt(BOARD_WIDTH * BOARD_HEIGHT) / sqrt(10000));
 		} else if (mouseY >= 95 && mouseY < 135 && evoBoard.selectedCreature == null) {
 			if (mouseX >= height + 10 && mouseX < height + 230)
 				resetZoom();
@@ -173,8 +181,9 @@ void mousePressed() {
 					if (evoBoard.textSaveInterval >= 0.7)
 						evoBoard.textSaveInterval = Math.round(evoBoard.textSaveInterval);
 				} else if (buttonNum == 6) {
+					maintainMaxPlaybackSpeed = false;
 					if (clickedOnLeft) {
-						if (evoBoard.playSpeed >= 2)
+						if (evoBoard.playSpeed >= 2 && SHIFT_DOWN == false)
 							evoBoard.playSpeed /= 2;
 						else
 							evoBoard.playSpeed = 0;
@@ -182,7 +191,9 @@ void mousePressed() {
 						if (evoBoard.playSpeed == 0)
 							evoBoard.playSpeed = 1;
 						else
-							evoBoard.playSpeed *= 2;
+							evoBoard.playSpeed = (evoBoard.playSpeed * 2);
+						if (SHIFT_DOWN)
+							maintainMaxPlaybackSpeed = true;
 					}
 				}
 			}
@@ -194,7 +205,7 @@ void mousePressed() {
 				if (evoBoard.selectedCreature != null) {
 					cameraX = (float)evoBoard.selectedCreature.px;
 					cameraY = (float)evoBoard.selectedCreature.py;
-					zoom = 12 * (sqrt(BOARD_WIDTH * BOARD_HEIGHT) / sqrt(10000));
+					zoom = findZoom(1.5 * LOD_TEXT);
 				}
 			}
 		}
@@ -231,7 +242,7 @@ void mouseReleased() {
 
 						if (distance <= body.getRadius()) {
 							evoBoard.selectedCreature = (Creature)body;
-							zoom = 12 * (sqrt(BOARD_WIDTH * BOARD_HEIGHT) / sqrt(10000));
+							zoom = findZoom(1.5 * LOD_TEXT);
 						}
 					}
 				}
