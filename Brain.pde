@@ -1,14 +1,13 @@
-final int BRAIN_WIDTH = 9;
+final int BRAIN_WIDTH = 4;
 final double AXON_START_MUTABILITY = 0.00375;
 final double STARTING_AXON_VARIABILITY = 1.0;
-int BRAIN_HEIGHT = 24;
+int BRAIN_HEIGHT = 20;
 
 String[] inputLabels = { "CHue", "CSat", "CBri", "LHue", "LSat", "LBri", "RHue", "RSat", "RBri",
-	                       "LVisD", "RVisD", "Accel.", "Turn", "Eat", "Fight", "EnergyD", "Size",
-	                       "Sine Rot.",
-	                       "Cosine Rot.", "UniRand", "NormRand", "Season", "# of Coll.", "Const." };
-String[] outputLabels = { "Accel.", "Turn", "Eat", "Fight", "Birth", "MHue", "BHue", "MHue2",
-	                        "BHue2" };
+	                       "LVisD", "RVisD",                              // "Accel.", "Turn", "Eat", "Fight",
+	                       "EnergyD", "Size", "Sine Rot.", "Cosine Rot.", "UniRand", "NormRand",
+	                       "Season", "# of Coll.", "Const." };
+String[] outputLabels = { "Accel.", "Turn", "Eat", "Fight", "Birth" };  // , "MHue", "BHue", "MHue2","BHue2" };
 
 
 Axon[][][] newWeights(int[] _shape) {
@@ -18,7 +17,7 @@ Axon[][][] newWeights(int[] _shape) {
 			for (int z = 0; z < weights[x][y].length; z++) {
 				// double startingWeight = Math.pow((Math.random() * 4. - 2.), mutatePower) *
 				// AXON_START_MUTABILITY / Math.pow(0.5, mutatePower);
-				double startingWeight = ThreadLocalRandom.current().nextGaussian() * .33333;
+				double startingWeight = ThreadLocalRandom.current().nextGaussian() * .5;
 
 				// if (y == weights[x].length - 1)
 				// startingWeight = Math.copySign(ThreadLocalRandom.current().nextGaussian() * 1.5 + .5,
@@ -35,7 +34,7 @@ Axon[][] newMemoryWeights(int[] _shape) {
 	Axon[][] weights = new Axon[_shape[0]][_shape[1]];
 	for (int x = 0; x < weights.length; x++) {
 		for (int y = 0; y < weights[x].length; y++) {
-			double startingWeight = ThreadLocalRandom.current().nextGaussian() * .25;
+			double startingWeight = ThreadLocalRandom.current().nextGaussian() * .333333;
 
 			weights[x][y] = new Axon(startingWeight * STARTING_AXON_VARIABILITY, AXON_START_MUTABILITY);
 		}
@@ -48,7 +47,7 @@ double[][] newActivations(int[] _shape) {
 	for (int x = 0; x < activations.length; x++) {
 		for (int y = 0; y < activations[x].length; y++) {
 			if (y == activations[x].length - 1)
-				activations[x][y] = ThreadLocalRandom.current().nextGaussian() * .5;
+				activations[x][y] = ThreadLocalRandom.current().nextGaussian();
 
 			/*Math.copySign(ThreadLocalRandom.current().nextDouble() * 1.5 + .25,
 			 * ThreadLocalRandom.current().nextDouble() * 2 - 1);*/
@@ -111,9 +110,10 @@ double[][] offspringActivations(ArrayList<Creature> parents) {
 			Creature parentForAxon = parents.get((int)(((axonAngle + randomParentRotation) % 1.0) *
 				parents.size()));
 
-			if (y == prototypeActivations[x].length)
-				activations[x][y] = parentForAxon.neurons[x][y] * .85;
-			activations[x][y] = parentForAxon.neurons[x][y];
+			if (y == prototypeActivations[x].length - 1)
+				activations[x][y] = parentForAxon.neurons[x][y] * .95;
+			else
+				activations[x][y] = parentForAxon.neurons[x][y];
 		}
 	}
 	return activations;

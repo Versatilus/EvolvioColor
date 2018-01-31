@@ -1,5 +1,5 @@
 final double MUTABILITY_MUTABILITY = 0.7;
-final int mutatePower = 3;
+final int mutatePower = 5;
 
 class Axon {
 	double MUTATE_MULTI;

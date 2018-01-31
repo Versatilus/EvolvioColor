@@ -1,14 +1,14 @@
 class Creature extends SoftBody {
 	double ACCELERATION_ENERGY = 0.06;
-	double ACCELERATION_BACK_ENERGY = 0.499;
-	double SWIM_ENERGY = 0.000125;
-	double TURN_ENERGY = 0.0625;
-	double EAT_ENERGY = 0.045;
-	double EAT_SPEED = 0.75;                                // 1 is instant, 0 is nonexistent, 0.001 is verrry slow.
+	double ACCELERATION_BACK_ENERGY = 0.7499;
+	double SWIM_ENERGY = 0.0005;
+	double TURN_ENERGY = 0.0425;
+	double EAT_ENERGY = 0.055;
+	double EAT_SPEED = 0.875;                               // 1 is instant, 0 is nonexistent, 0.001 is verrry slow.
 	double EAT_WHILE_MOVING_INEFFICIENCY_MULTIPLIER = .975; // The bigger this number is, the less effiently creatures eat when they're moving.
-	double FIGHT_ENERGY = 0.08;
-	double INJURED_ENERGY = .125;
-	double METABOLISM_ENERGY = 0.015;
+	double FIGHT_ENERGY = 0.065;
+	double INJURED_ENERGY = 5.;
+	double METABOLISM_ENERGY = 0.035;
 	String name;
 	String parents;
 	int gen;
@@ -32,7 +32,7 @@ class Creature extends SoftBody {
 	final double FOOD_SENSITIVITY = 0.35;
 	double vr = 0;
 	double rotation = 0;
-	final int MIN_NAME_LENGTH = 6;
+	final int MIN_NAME_LENGTH = 3;
 	final int MAX_NAME_LENGTH = 12;
 	final float BRIGHTNESS_THRESHOLD = 0.7;
 
@@ -77,7 +77,7 @@ class Creature extends SoftBody {
 				BRAIN_WIDTH - 1, BRAIN_HEIGHT - 1, BRAIN_HEIGHT - 1
 			});
 			memoryAxons = newMemoryWeights(new int[] {
-				BRAIN_WIDTH - 2, BRAIN_HEIGHT - 1
+				BRAIN_WIDTH - 1, BRAIN_HEIGHT - 1
 			});
 			neurons = newActivations(new int[] {
 				BRAIN_WIDTH, BRAIN_HEIGHT
@@ -188,18 +188,18 @@ class Creature extends SoftBody {
 			neurons[0][i] = visionResults[i];
 		neurons[0][9] = visionLineLengths[1];
 		neurons[0][10] = visionLineLengths[2];
-		neurons[0][11] = averageAcceleration;
-		neurons[0][12] = averageTurning;
-		neurons[0][13] = averageEating;
-		neurons[0][14] = averageFighting;
-		neurons[0][15] = sigmoid(getEnergyUsage(timeStep) * 10);
-		neurons[0][16] = sigmoid(energy - 1);
-		neurons[0][17] = Math.sin(rotation);
-		neurons[0][18] = Math.cos(rotation);
-		neurons[0][19] = ThreadLocalRandom.current().nextDouble(2.) - 1;  // px / board.boardWidth;
-		neurons[0][20] = ThreadLocalRandom.current().nextGaussian();      // py / board.boardHeight;
-		neurons[0][21] = (board.year % 1.f) * 2.f - 1.f;
-		neurons[0][22] = sigmoid(2. * numberOfCollisions);
+		// neurons[0][11] = averageAcceleration;
+		// neurons[0][12] = averageTurning;
+		// neurons[0][13] = averageEating;
+		// neurons[0][14] = averageFighting;
+		neurons[0][11] = sigmoid(getEnergyUsage(timeStep) * 10);
+		neurons[0][12] = sigmoid(energy - 1);
+		neurons[0][13] = Math.sin(rotation);
+		neurons[0][14] = Math.cos(rotation);
+		neurons[0][15] = ThreadLocalRandom.current().nextDouble(2.) - 1;  // px / board.boardWidth;
+		neurons[0][16] = ThreadLocalRandom.current().nextGaussian();      // py / board.boardHeight;
+		neurons[0][17] = (board.year % 1.) * 2. - 1.;
+		neurons[0][18] = sigmoid(2. * numberOfCollisions);
 	}
 	public void useBrain(double timeStep) {
 		//
@@ -214,14 +214,15 @@ class Creature extends SoftBody {
 
 				for (int input = 0; input < neurons[x - 1].length - 1; input++)
 					total += neurons[x - 1][input] * axons[x - 1][y][input].weight;
-				total /= (neurons[x - 1].length * .33333);
+				total /= (neurons[x - 1].length * .25);
 				if (x == BRAIN_WIDTH - 1) {
-					neurons[x][y] = sigmoid(total + neurons[x][neurons[x].length - 1]);
-					if (y == 8)
+					neurons[x][y] = sigmoid(total + (neurons[x - 1][neurons[x - 1].length - 1] *
+						memoryAxons[x - 1][y].weight));
+					if (y == 4)
 						break;
 				} else {
-					neurons[x][y] = sigmoid(total + neurons[x][neurons[x].length - 1] + neurons[x][y] *
-						memoryAxons[x - 1][y].weight);
+					neurons[x][y] = sigmoid(total + (neurons[x - 1][neurons[x - 1].length - 1] +
+						neurons[x][y]) * memoryAxons[x - 1][y].weight);
 				}
 			}
 		}
@@ -263,7 +264,7 @@ class Creature extends SoftBody {
 		// 1.;
 	}
 	public double sigmoid(double input) {
-		return 2. / (1.0 + Math.exp(-.45 * input)) - 1.;
+		return 2. / (1.0 + Math.exp(-.85 * input)) - 1.;
 	}
 	public double relu(double x) {
 		return x < 0 ? x * .5 : x;
@@ -398,7 +399,7 @@ class Creature extends SoftBody {
 		int x = xBound((int)choiceX);
 		int y = yBound((int)choiceY);
 
-		return board.tiles[x][y];
+		return board.getTile(x, y);
 	}
 	public void eat(double attemptedAmount, double timeStep) {
 		double amount = attemptedAmount / (1.0 + distance(0, 0, vx, vy) *
@@ -437,8 +438,11 @@ class Creature extends SoftBody {
 					float distance = dist((float)px, (float)py, (float)collider.px, (float)collider.py);
 					double combinedRadius = getRadius() * FIGHT_RANGE + collider.getRadius();
 
-					if (distance < combinedRadius)
-						((Creature)collider).dropEnergy(fightLevel * INJURED_ENERGY * timeStep);
+					if (distance < combinedRadius) {
+						((Creature)collider).dropEnergy(fightLevel * INJURED_ENERGY * timeStep *
+						((combinedRadius - distance) / (combinedRadius - getRadius() +
+						collider.getRadius())));
+					}
 				}
 			}
 		} else {
@@ -467,7 +471,7 @@ class Creature extends SoftBody {
 			visionOccludedX[k] = endX;
 			visionOccludedY[k] = endY;
 
-			color c = getColorAt(endX, endY);
+			color c = board.getColorAt(endX, endY);
 
 			visionResults[k * 3] = hue(c);
 			visionResults[k * 3 + 1] = saturation(c);
@@ -523,12 +527,6 @@ class Creature extends SoftBody {
 			visionLineLengths[k] = visionLineLength;
 		}
 	}
-	public color getColorAt(double x, double y) {
-		if (x >= 0 && x < board.boardWidth && y >= 0 && y < board.boardHeight)
-			return board.tiles[(int)(x)][(int)(y)].getColor();
-		else
-			return board.BACKGROUND_COLOR;
-	}
 	public void addPVOs(int x, int y, ArrayList<SoftBody> PVOs) {
 		if (x >= 0 && x < board.boardWidth && y >= 0 && y < board.boardHeight) {
 			for (SoftBody newCollider : board.getSoftBodiesInPositions(x, y)) {
@@ -537,7 +535,7 @@ class Creature extends SoftBody {
 			}
 		}
 	}
-	public void returnToEarth() {
+	public synchronized void returnToEarth() {
 		int pieces = 20;
 
 

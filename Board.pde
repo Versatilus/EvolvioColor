@@ -12,12 +12,12 @@ class Board {
 	int creatureMaximum;
 	ForkJoinPool pool;
 	boolean drawingIcon = false;
-	int iterationStartTime = 0;
+	long iterationStartTime = 0;
 	float averageIterationTime = 0;
 
 	// NetworkRunner networkRunner;
 
-	Tile[][] tiles;
+	Tile[] tiles;
 
 	double year = 0;
 	float MIN_TEMPERATURE;
@@ -83,7 +83,7 @@ class Board {
 		randomSeed(SEED);
 		boardWidth = w;
 		boardHeight = h;
-		tiles = new Tile[w][h];
+		tiles = new Tile[w * h];
 		for (int x = 0; x < boardWidth; x++) {
 			for (int y = 0; y < boardHeight; y++) {
 				float bigForce = pow(((float)y) / boardHeight, 0.5);
@@ -93,7 +93,7 @@ class Board {
 				0.4;
 
 				climateType = min(max(climateType, 0), 0.92);
-				tiles[x][y] = new Tile(x, y, fertility, 0, climateType, this);
+				tiles[x + boardWidth * y] = new Tile(x, y, fertility, 0, climateType, this);
 			}
 		}
 		MIN_TEMPERATURE = min;
@@ -135,7 +135,7 @@ class Board {
 	public void drawBoard(float scaleUp, float camZoom, int mX, int mY) {
 		for (int x = 0; x < boardWidth; x++) {
 			for (int y = 0; y < boardHeight; y++)
-				tiles[x][y].drawTile(scaleUp, (mX == x && mY == y));
+				tiles[x + boardWidth * y].drawTile(scaleUp, (mX == x && mY == y));
 		}
 		for (int i = 0; i < rocks.size(); i++)
 			rocks.get(i).drawSoftBody(scaleUp);
@@ -374,7 +374,7 @@ class Board {
 	public void iterate(double timeStep) {
 		while (isDrawing) {}
 		isSimulating = true;
-		iterationStartTime = millis();
+		iterationStartTime = System.nanoTime();
 
 		double prevYear = year;
 
@@ -397,27 +397,26 @@ class Board {
 
 			float stepSize = (float)(NOISE_STEP_SIZE + prevYear * .000025);
 
-			for (int x = 0; x < boardWidth; x++) {
-				// for (int y = 0; y < boardHeight; y++) {
-				// float bigForce = pow(((float)y) / boardHeight, 0.5);
-				// float fertility = (noise(x * stepSize * 3, y * stepSize * 3) * (1 - bigForce) * 5.0 +
-				// noise(x * stepSize * 0.5, y * stepSize * 0.5) * bigForce * 5.0 - 1.5) * .65 + .31;
-				// float climateType = noise(x * stepSize * 0.2 + 10000, y * stepSize * 0.2 + 10000) * 1.63 -
-				// 0.4;
-				//
-				// climateType = min(max(climateType, 0), 0.92);
-				//
-				// double lastUpdate = tiles[x][y].lastUpdateTime;
-				//
-				// tiles[x][y] = new Tile(x, y, fertility, (float)tiles[x][y].getFoodLevel(), climateType,
-				// this);
-				// tiles[x][y].lastUpdateTime = lastUpdate;
-				// }
+			// for (int x = 0; x < boardWidth; x++) {
+			// for (int y = 0; y < boardHeight; y++) {
+			// float bigForce = pow(((float)y) / boardHeight, 0.5);
+			// float fertility = (noise(x * stepSize * 3, y * stepSize * 3) * (1 - bigForce) * 5.0 +
+			// noise(x * stepSize * 0.5, y * stepSize * 0.5) * bigForce * 5.0 - 1.5) * .65 + .31;
+			// float climateType = noise(x * stepSize * 0.2 + 10000, y * stepSize * 0.2 + 10000) * 1.63 -
+			// 0.4;
+			//
+			// climateType = min(max(climateType, 0), 0.92);
+			//
+			// double lastUpdate = tiles[x + boardWidth * y].lastUpdateTime;
+			//
+			// tiles[x + boardWidth * y] = new Tile(x, y, fertility, (float)tiles[x + boardWidth *
+			// y].getFoodLevel(), climateType, this);
+			// tiles[x + boardWidth * y].lastUpdateTime = lastUpdate;
+			// }
+			// }
+			QuickTiler tiler = new QuickTiler(tiles, 0, tiles.length);
 
-				QuickTiler tiler = new QuickTiler(tiles[x], 0, tiles[x].length);
-
-				pool.invoke(tiler);
-			}
+			pool.invoke(tiler);
 		}
 		randomSeed(ThreadLocalRandom.current().nextInt());
 
@@ -459,7 +458,8 @@ class Board {
 		// prepareForFileSave(1);
 		// if (Math.floor(fileSaveTimes[3] / textSaveInterval) != Math.floor(year / textSaveInterval))
 		// prepareForFileSave(3);
-		averageIterationTime = (2 * averageIterationTime + (millis() - iterationStartTime)) / 3.;
+		averageIterationTime = (2 * averageIterationTime + (System.nanoTime() - iterationStartTime) *
+		.000001) / 3.;
 	}
 	private double getGrowthRate(double theTime) {
 		double temperatureRange = MAX_TEMPERATURE - MIN_TEMPERATURE;
@@ -686,6 +686,11 @@ class Board {
 			tiles = workgroup;
 			mStart = start;
 			mLength = length;
+
+			int processors = Runtime.getRuntime().availableProcessors();
+
+			sThreshold = tiles.length / (int)(processors * 2.5) > 5 ? tiles.length / (int)(2.5 *
+			processors) : 5;
 		}
 
 
@@ -796,5 +801,15 @@ class Board {
 			invokeAll(new QuickVision(critters, mStart, split, timeStep), new QuickVision(critters,
 			mStart + split, mLength - split, timeStep));
 		}
+	}
+
+	public color getColorAt(double x, double y) {
+		if (x >= 0 && x < boardWidth && y >= 0 && y < boardHeight)
+			return tiles[(int)x + boardWidth * (int)y].getColor();
+		else
+			return BACKGROUND_COLOR;
+	}
+	Tile getTile(int x, int y) {
+		return tiles[x + boardWidth * y];
 	}
 }

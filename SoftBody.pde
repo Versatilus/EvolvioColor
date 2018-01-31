@@ -111,7 +111,7 @@ class SoftBody {
 			double combinedRadius = getRadius() + collider.getRadius();
 
 			if (distance < combinedRadius) {
-				numberOfCollisions = (numberOfCollisions + 2.) / 3.;
+				numberOfCollisions = numberOfCollisions + 1.;
 
 				double force = combinedRadius * COLLISION_FORCE;
 
@@ -120,7 +120,7 @@ class SoftBody {
 			}
 		}
 		if (oldNumberOfCollisions == numberOfCollisions)
-			numberOfCollisions *= .975;
+			numberOfCollisions *= .99;
 		fightLevel = 0;
 	}
 	public void applyMotions(double timeStep) {

@@ -1,0 +1,9 @@
+* text=auto
+*.pde text
+*.txt text
+*.java text
+*.properties text
+*.md text
+
+*.jpg binary
+*.png binary

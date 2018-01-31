@@ -2,9 +2,9 @@ Board evoBoard;
 
 final int SEED = 5;
 final float NOISE_STEP_SIZE = 0.02;
-final int BOARD_WIDTH = 25;
-final int BOARD_HEIGHT = 25;
-int lastFrameTime = 0;
+final int BOARD_WIDTH = 40;
+final int BOARD_HEIGHT = 40;
+long lastFrameTime = 0;
 final float SCALE_TO_FIX_BUG = 100;
 float GROSS_OVERALL_SCALE_FACTOR;
 final double TIME_STEP = 0.001;
@@ -63,7 +63,7 @@ void draw() {
 	while (isSimulating) {}
 	isDrawing = true;
 
-	int drawStartTime = millis();
+	long drawStartTime = System.nanoTime();
 
 	if (dist(prevMouseX, prevMouseY, mouseX, mouseY) > 5)
 		draggedFar = true;
@@ -105,9 +105,10 @@ void draw() {
 	isDrawing = false;
 	prevMouseX = mouseX;
 	prevMouseY = mouseY;
-	averageDrawTime = (2. * averageDrawTime + (double)(millis() - drawStartTime)) / 3.;
+	averageDrawTime = (2. * averageDrawTime + (double)(System.nanoTime() - drawStartTime) * .000001) /
+	3.;
 	if (maintainMaxPlaybackSpeed && frameCount % (int)frameRate == 0)
-		evoBoard.playSpeed = (int)((1000. - Math.max(averageDrawTime, 17.) * 5) /
+		evoBoard.playSpeed = (int)((1000. - Math.max(averageDrawTime, 16.666) * 5) /
 		evoBoard.averageIterationTime * .2);
 }
 
