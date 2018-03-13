@@ -2,8 +2,8 @@ Board evoBoard;
 
 final int SEED = 5;
 final float NOISE_STEP_SIZE = 0.02;
-final int BOARD_WIDTH = 40;
-final int BOARD_HEIGHT = 40;
+final int BOARD_WIDTH = 25;
+final int BOARD_HEIGHT = 25;
 long lastFrameTime = 0;
 final float SCALE_TO_FIX_BUG = 100;
 float GROSS_OVERALL_SCALE_FACTOR;
@@ -108,8 +108,8 @@ void draw() {
 	averageDrawTime = (2. * averageDrawTime + (double)(System.nanoTime() - drawStartTime) * .000001) /
 	3.;
 	if (maintainMaxPlaybackSpeed && frameCount % (int)frameRate == 0)
-		evoBoard.playSpeed = (int)((1000. - Math.max(averageDrawTime, 16.666) * 5) /
-		evoBoard.averageIterationTime * .2);
+		evoBoard.playSpeed = (int)Math.max((1000. - Math.max(averageDrawTime, 16.666) * 5) /
+		evoBoard.averageIterationTime * .2,1);
 }
 
 void mouseWheel(MouseEvent event) {

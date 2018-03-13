@@ -1,4 +1,4 @@
-final int BRAIN_WIDTH = 4;
+final int BRAIN_WIDTH = 6;
 final double AXON_START_MUTABILITY = 0.00375;
 final double STARTING_AXON_VARIABILITY = 1.0;
 int BRAIN_HEIGHT = 20;
@@ -11,13 +11,14 @@ String[] outputLabels = { "Accel.", "Turn", "Eat", "Fight", "Birth" };  // , "MH
 
 
 Axon[][][] newWeights(int[] _shape) {
+	double variance = 1.0/(Math.sqrt(BRAIN_HEIGHT));
 	Axon[][][] weights = new Axon[_shape[0]][_shape[1]][_shape[2]];
 	for (int x = 0; x < weights.length; x++) {
 		for (int y = 0; y < weights[x].length; y++) {
 			for (int z = 0; z < weights[x][y].length; z++) {
 				// double startingWeight = Math.pow((Math.random() * 4. - 2.), mutatePower) *
 				// AXON_START_MUTABILITY / Math.pow(0.5, mutatePower);
-				double startingWeight = ThreadLocalRandom.current().nextGaussian() * .5;
+				double startingWeight = ThreadLocalRandom.current().nextGaussian() * variance;
 
 				// if (y == weights[x].length - 1)
 				// startingWeight = Math.copySign(ThreadLocalRandom.current().nextGaussian() * 1.5 + .5,
@@ -31,10 +32,11 @@ Axon[][][] newWeights(int[] _shape) {
 }
 
 Axon[][] newMemoryWeights(int[] _shape) {
+	double variance = 1.0/(Math.sqrt(BRAIN_HEIGHT*2));
 	Axon[][] weights = new Axon[_shape[0]][_shape[1]];
 	for (int x = 0; x < weights.length; x++) {
 		for (int y = 0; y < weights[x].length; y++) {
-			double startingWeight = ThreadLocalRandom.current().nextGaussian() * .333333;
+			double startingWeight = ThreadLocalRandom.current().nextGaussian() * variance;
 
 			weights[x][y] = new Axon(startingWeight * STARTING_AXON_VARIABILITY, AXON_START_MUTABILITY);
 		}

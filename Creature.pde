@@ -5,7 +5,7 @@ class Creature extends SoftBody {
 	double TURN_ENERGY = 0.0425;
 	double EAT_ENERGY = 0.055;
 	double EAT_SPEED = 0.875;                               // 1 is instant, 0 is nonexistent, 0.001 is verrry slow.
-	double EAT_WHILE_MOVING_INEFFICIENCY_MULTIPLIER = .975; // The bigger this number is, the less effiently creatures eat when they're moving.
+	double EAT_WHILE_MOVING_INEFFICIENCY_MULTIPLIER = 1.25; // The bigger this number is, the less effiently creatures eat when they're moving.
 	double FIGHT_ENERGY = 0.065;
 	double INJURED_ENERGY = 5.;
 	double METABOLISM_ENERGY = 0.035;
@@ -214,7 +214,7 @@ class Creature extends SoftBody {
 
 				for (int input = 0; input < neurons[x - 1].length - 1; input++)
 					total += neurons[x - 1][input] * axons[x - 1][y][input].weight;
-				total /= (neurons[x - 1].length * .25);
+				// total /= (neurons[x - 1].length * .25);
 				if (x == BRAIN_WIDTH - 1) {
 					neurons[x][y] = sigmoid(total + (neurons[x - 1][neurons[x - 1].length - 1] *
 						memoryAxons[x - 1][y].weight));
@@ -242,21 +242,35 @@ class Creature extends SoftBody {
 	}
 	public void applyOutput(double timeStep) {
 		int end = neurons.length - 1;
-
-
+		double [] outputs = new double[5];
+		double softSum = 0;
+		for (int i=0; i<outputs.length; i++){
+			outputs[i] = Math.exp(Math.abs(10*neurons[end][i]));
+			softSum += outputs[i];
+		}
+		
+		for (int i=0; i<outputs.length; i++)
+			neurons[end][i] = Math.copySign(outputs[i]/softSum, neurons[end][i]);
+	
+		// accelerationDesire = Math.copySign(outputs[0]/softSum, neurons[end][0]);
+		// rotationDesire =Math.copySign( outputs[1]/softSum, neurons[end][1]);
+		// foodDesire = Math.copySign(outputs[2]/softSum, neurons[end][2]);
+		// fightDesire = Math.copySign(outputs[3]/softSum, neurons[end][3]);
+		// offspringDesire = Math.copySign(outputs[4]/softSum, neurons[end][4]);
+		
 		accelerationDesire = neurons[end][0];
 		rotationDesire = neurons[end][1];
 		foodDesire = neurons[end][2];
 		fightDesire = neurons[end][3];
 		offspringDesire = (neurons[end][4]);
 		mouthHueDesire = neurons[end][5];
-		hueDesire = neurons[end][6];
+		hueDesire = neurons[end][6]; 
 
 		accelerate(accelerationDesire, timeStep);
 		turn(rotationDesire, timeStep);
 		eat(foodDesire, timeStep);
 		fight(fightDesire, timeStep);
-		if (board.creatureMaximum > board.creatures.size() && offspringDesire + (energy * .1) > 0. &&
+		if (board.creatureMaximum > board.creatures.size() && offspringDesire /* + (energy * .1) */ > 0. &&
 		board.year - birthTime >= MATURE_AGE && energy > SAFE_SIZE)
 			reproduce(SAFE_SIZE, timeStep);
 		// hue = Math.abs(inter(geneticHue, hueDesire, neurons[end][8] * neurons[end][8])) % 1.;
@@ -264,7 +278,7 @@ class Creature extends SoftBody {
 		// 1.;
 	}
 	public double sigmoid(double input) {
-		return 2. / (1.0 + Math.exp(-.85 * input)) - 1.;
+		return 2. / (1.0 + Math.exp(-2 * input)) - 1.;
 	}
 	public double relu(double x) {
 		return x < 0 ? x * .5 : x;
